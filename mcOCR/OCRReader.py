@@ -39,6 +39,49 @@ def display_at_scale (img, scale_factor, display_text=""):
     cv2.imshow('test', temp_img)
     cv2.waitKey(0)
 
+def display_with_line (img, line_cord, horiz=True, scale_factor=3):
+    display_img = img.copy()
+    
+    dims = img.shape
+    h, w = dims[:2]
+    display_img = cv2.resize(display_img, 
+        (w * scale_factor, h * scale_factor), 
+        interpolation=cv2.INTER_NEAREST)
+
+    line_cord *= scale_factor
+    p1, p2 = 0, 0
+    if horiz:
+        p1 = (0, line_cord)
+        p2 = (len(display_img[0]), line_cord)
+    else:
+        p1 = (line_cord, 0)
+        p2 = (line_cord, len(display_img))
+    display_img = cv2.line(display_img, p1, p2, (150, 150, 150))
+
+    display_at_scale(display_img, 1)
+
+def display_many_lines (img, line_cords, horiz=True, scale_factor=3):
+    display_img = img.copy()
+    
+    dims = img.shape
+    h, w = dims[:2]
+    display_img = cv2.resize(display_img, 
+        (w * scale_factor, h * scale_factor), 
+        interpolation=cv2.INTER_NEAREST)
+
+    for cord in line_cords:
+        cord *= scale_factor
+        p1, p2 = 0, 0
+        if horiz:
+            p1 = (0, cord)
+            p2 = (len(display_img[0]), cord)
+        else:
+            p1 = (cord, 0)
+            p2 = (cord, len(display_img))
+        display_img = cv2.line(display_img, p1, p2, (150, 150, 150))
+
+    display_at_scale(display_img, 1)
+
 def display_with_bboxes (img, bboxes, color=(150, 250, 200), scale_factor=4):
     display_copy = img.copy()
     w, h = display_copy.shape
@@ -54,6 +97,52 @@ def display_with_bboxes (img, bboxes, color=(150, 250, 200), scale_factor=4):
                                      (150, 250, 200))
 
     display_at_scale(display_copy, 1)
+
+
+
+
+
+'''
+            Reading Images
+'''
+# TODO: figure out how to declare return types in python
+def read_image (color_img):
+    '''
+    Reads the text in a screenshot of mc
+    Is returned with newlines between lines, but no spaces
+    
+    Preconditions:
+        All text is inline - cannot tolerate multiple vertically offset textboxes
+        Correct GUI scale - text must be 2 pixels thick coming in
+        Color - text color must be (221, 221, 221)
+        Minimal low-hanging letters - too many g, y, j, 3,, will break it (sorry)
+    '''
+    text_img = isolate_debug_text(color_img)
+    text_img = resize_text_img(text_img)
+    bboxes = extract_char_bboxes(text_img)
+
+    ret_text = ""
+    for line_bboxes in bboxes:
+        ret_text += read_bboxes(text_img, line_bboxes)
+        ret_text += '\n'
+    ret_text = ret_text[:-1]
+
+    return ret_text
+
+def isolate_debug_text (color_img):
+    # The text is at r,g,b = 221
+    lower = (219, 219, 219)
+    upper = (224, 224, 224)
+    img = cv2.inRange(color_img, lower, upper)
+    return img
+
+# TODO: Detect the thickness of the text automatically
+def resize_text_img (text_img):
+    h, w = text_img.shape
+    # Right now I'm assuming the text is 2 px thick
+    text_img = cv2.resize(text_img, (w//2, h//2), interpolation=cv2.INTER_NEAREST)
+    return text_img
+
 
 
 
@@ -128,14 +217,91 @@ def read_bboxes (binary_img, bboxes):
 
 
 
+
 '''
-            Reading Images
+            Character Segmentation
 '''
-def read_image (color_img):
+def extract_char_bboxes (text_img):
+    '''
+    Extracts the bounding box of each character,
+    The return array is 3D
+        first index > line (for newlines)
+        second index > character on line
+        third index > bbox cords
+    '''
+    line_bottoms = get_baselines(text_img)
 
-    pass
+    char_bboxes = []
+    for baseline in line_bottoms:
+        char_bboxes += [extract_bboxes_in_line(text_img, baseline)]
+    
+    return char_bboxes
 
+def get_baselines (text_img):
+    search_width = 50
+    start_x = first_col_with_white(text_img)
+    end_x = start_x + search_width
 
+    lines_y = []
+    white_in_strip = False
+    prev_white_in_strip = False
+    prev_slice = []
+    for y_val, px_slice in enumerate(text_img[:, start_x:end_x]):
+        if np.sum(px_slice) > 0:
+            white_in_strip = True
+        else:
+            white_in_strip = False
 
+        # Hit bottom of a line
+        if not white_in_strip and prev_white_in_strip:
+            # If a line's bottom is really flat, its bbox wont be
+            # alligned. This is because pertruding characters (j, ,, g)
+            # push it down one further. This percentage check corrects for it
+
+            # This algorithm would fail if a line had many g, y, j, etc chars
+            percent_white = np.sum(prev_slice) / 255 / search_width
+            if percent_white > 0.1:
+                lines_y += [y_val + 1]
+            else:
+                lines_y += [y_val]
+        
+        prev_white_in_strip = white_in_strip
+        prev_slice = px_slice
+    
+    return lines_y
+
+def first_col_with_white (text_img):
+    for col_ind in range(len(text_img[0])):
+        col = text_img[:, col_ind]
+        if np.sum(col) != 0:
+            return col_ind
+
+    return len(text_img[0]) - 1
+
+def extract_bboxes_in_line (text_img, line_y):
+    # 8 = line_height, known because the font is known
+    above_y = line_y - 8
+
+    line_bboxes = []
+    white_in_strip = False
+    prev_white_in_strip = False
+    left_x = 0
+    for x_val in range(len(text_img[0])):
+        px_strip = text_img[above_y:line_y, x_val]
+        if np.sum(px_strip) > 0:
+            white_in_strip = True
+        else:
+            white_in_strip = False
+
+        # Pretty much the same logic as get_baselines
+        if not white_in_strip and prev_white_in_strip:
+            # left right top bottom <=> small big small big
+            line_bboxes += [[left_x, x_val, above_y, line_y]]
+        elif white_in_strip and not prev_white_in_strip:
+            left_x = x_val
+        
+        prev_white_in_strip = white_in_strip
+
+    return line_bboxes
 
 
