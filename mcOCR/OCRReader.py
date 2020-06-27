@@ -147,6 +147,48 @@ def resize_text_img (text_img):
 
 
 
+# TODO: this should be a or part of a class
+'''
+            ROI Creation and Caching
+
+Right now I only care about xyz/ coordinate info. Since
+that's only part of the screen I can cache that part and
+then repeated calls will come to it.
+'''
+def get_line_y (color_img, search_text):
+    '''
+    Returns the y of the first line which contains text verbatim
+    Same preconditions as read_text
+    If nothing is found, -1 is returned
+    '''
+    text_img = isolate_debug_text(color_img)
+    text_img = resize_text_img(text_img)
+
+    #TODO: here there are unnecessary calls because 
+    #      extract_char_bboxes also calls get_baselines
+    bboxes = extract_char_bboxes(text_img)
+    line_ys = get_baselines(text_img)
+
+    for index, line_bboxes in enumerate(bboxes):
+        line_text = read_bboxes(text_img, line_bboxes)
+
+        if search_text in line_text:
+            return line_ys[index]
+
+    return -1
+
+def read_at_line_y (color_img, line_y):
+    text_img = isolate_debug_text(color_img)
+    text_img = resize_text_img(text_img)
+    line_bboxes = extract_bboxes_in_line(text_img, line_y)
+    return read_bboxes(text_img, line_bboxes)
+
+    
+
+
+
+
+
 '''
             Reading Characters
 '''
