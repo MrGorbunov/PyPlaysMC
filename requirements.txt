@@ -16,7 +16,7 @@ pycrypto==2.6.1
 pygobject==3.26.1
 pyliblzma==0.5.3
 pysqlcipher3==1.0.3
-pyxdg==0.25
+pyxdg==0.26
 SecretStorage==2.3.1
 six==1.11.0
 SOAPpy==0.12.22
