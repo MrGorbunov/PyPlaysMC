@@ -1,11 +1,25 @@
 # Documentation
-Lmao sike nigga
 
+## Window Fetcher
 
-## OCR
+This part works to capture the part of the screen that is the Minecraft (MC) instance. The Minecraft window itself locks the cursor to be within it. By letting the user move their cursor around, this will keep track of the min & max x & y, creating a box around the MC instance and nothing else.
 
 #### Usage
-In order to run the OCR, import OCRReader.py, and input your debug menu screenshot to read_image(img). It will automaticaly isolate the text (polarize image) scan the entire image, and then and read it for Minecraft-font text. It is somewhat slow to read the entire image and is more efficient to rea only where you need to. Use the following as an example of how to do that. Time metrics are also listed within the example
+windowFetcher.py has 2 main uses:
+ - Get the dimensions of the MC window
+ - Capture the MC window
+
+As explained above, getting the dimensions of the MC window is a long (multi-second) process. It is recommended to start by calling ```display_countdown (duration)``` which will provide a countdown to allow tabing to the window. Then call ```get_window_dimensions (duration, fps)``` and it will capture mouse movement for the duration (all in seconds), refreshing fps times a second. 
+
+```get_window_dimensions(...)```, once done, will return a dictionary with the screen bounds. This dictionary then needs to be supplied to ```capture_area (dict)``` and it will return the MC window. If the window is moved than this will fail, and the program will need to be either restarted or ```get_window_dimensions(...)``` called again.
+
+The function ```get_mouse_locale(sq_size)``` can be called to capture a square around the mouse. Note that sq_size is a side length, not radius. Also, even though the MC window has a little cross in the middle, the actual system cursor is free to move around the window, so this does not just capture the center of the screen.
+
+
+## MC OCR
+
+#### Usage
+In order to run the OCR, import OCRReader.py, and input your debug menu screenshot to ```read_image(img)```. It will automaticaly isolate the text (polarize image) scan the entire image, and then and read it for Minecraft-font text. It is somewhat slow to read the entire image and is more efficient to rea only where you need to. Use the following as an example of how to do that. Time metrics are also listed within the example
 
 ```python
 from OCRReader import get_line_y, read_at_line_y

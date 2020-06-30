@@ -31,14 +31,21 @@ def get_mouse_locale (sq_size: int):
     sct = mss()
     mouse_pos = get_mouse_pos()
 
-    top = mouse_pos[1] - sq_size
+    top = mouse_pos[1] - sq_size // 2
     left = mouse_pos[0] - sq_size // 2
     monitor = {"top": top, "left": left, "width": sq_size, "height": sq_size}
     IMG = Image.frombytes("RGB", (sq_size, sq_size), sct.grab(monitor).rgb)
-    IMG = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    IMG = cv2.cvtColor(np.array(IMG), cv2.COLOR_RGB2BGR)
 
     return IMG
 
+def capture_area (monitor_dict):
+    sct = mss()
+    IMG = Image.frombytes("RGB", 
+                          (monitor_dict["width"], monitor_dict["height"]),
+                          sct.grab(monitor_dict).rgb)
+    IMG = cv2.cvtColor(np.array(IMG), cv2.COLOR_RGB2BGR)
+    return IMG
 
 
 
