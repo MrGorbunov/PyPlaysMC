@@ -9,9 +9,9 @@ windowFetcher.py has 2 main uses:
  - Get the dimensions of the MC window
  - Capture the MC window
 
-As explained above, getting the dimensions of the MC window is a long (multi-second) process. It is recommended to start by calling ```display_countdown (duration)``` which will provide a countdown to allow tabing to the window. Then call ```get_window_dimensions (duration, fps)``` and it will capture mouse movement for the duration (all in seconds), refreshing fps times a second. 
+As explained above, getting the dimensions of the MC window is a long (multi-second) process. It is recommended to start by calling ```display_countdown(duration)``` which will provide a countdown to allow tabing to the window. Then call ```get_window_dimensions(duration, fps)``` and it will capture mouse movement for the duration (all in seconds), refreshing fps times a second. 
 
-```get_window_dimensions(...)```, once done, will return a dictionary with the screen bounds. This dictionary then needs to be supplied to ```capture_area (dict)``` and it will return the MC window. If the window is moved than this will fail, and the program will need to be either restarted or ```get_window_dimensions(...)``` called again.
+```get_window_dimensions(...)```, once done, will return a dictionary with the screen bounds. This dictionary then needs to be supplied to ```capture_area(dict)``` and it will return the MC window. If the window is moved than this will fail, and the program will need to be either restarted or ```get_window_dimensions(...)``` called again.
 
 The function ```get_mouse_locale(sq_size)``` can be called to capture a square around the mouse. Note that sq_size is a side length, not radius. Also, even though the MC window has a little cross in the middle, the actual system cursor is free to move around the window, so this does not just capture the center of the screen.
 
@@ -54,7 +54,7 @@ There are a couple quirks.
  - It does not detect spaces. But, there are newlines between lines.
 
 The biggest quirks are the preconditions:
- - **All text is inline** - If there are multiple text boxes and the one on the left is shifted vertically then there's an issue. If a line below is shifted horizontally, then there's no issues. This is why in the example there is a line *img = img[:500, :800]*
+ - **All text is inline** - If there are multiple text boxes and the one on the left is shifted vertically then there's an issue. If a line below is shifted horizontally, then there's no issues. This is why in the example there is a line ```img = img[:500, :800]```
  - **Input must be correct scale** - The text must be exactly 2 pixels thick. Adjust your GUI scale for this
  - **Color** - I believe this is constant, but it assumes the text is colored at (221, 221, 221)
  - **Minimal Low-Handing Letters** - In detecting the bottoms of lines, having too many g, j, q, y, etc will throw off the alg
