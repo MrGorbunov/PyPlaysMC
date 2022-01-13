@@ -1,5 +1,5 @@
 mss==5.1.0
 numpy==1.19.0
 opencv-python==4.2.0.34
-Pillow==8.1.1
+Pillow==9.0.0
 pkg-resources==0.0.0
